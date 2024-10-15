@@ -1,36 +1,63 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
+import { Stack } from "expo-router";
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { FIREBASE_AUTH } from "@/firebase-config";
+import { View, ActivityIndicator, Text } from "react-native";
+import { useRouter } from "expo-router";
 import 'react-native-reanimated';
-
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+    const subscriber = onAuthStateChanged(FIREBASE_AUTH, (authUser) => {
+      setUser(authUser);
+      setInitializing(false);
+    });
+    return subscriber; // Unsubscribe on unmount
+  }, []);
 
-  if (!loaded) {
-    return null;
+  useEffect(() => {
+    if (initializing) return; // Wait until initialization is done
+
+    if (user) {
+      // If the user is authenticated, go to home
+      router.replace("/(tabs)");
+    } else {
+      // If the user is not authenticated, go to auth landing page
+      router.replace("/auth/");
+    }
+  }, [user, initializing]);
+
+  if (initializing) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size='large' />
+        <Text>Loading...</Text>
+      </View>
+    );
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+        {/* Define Screens for both authenticated and unauthenticated states */}
+        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+        <Stack.Screen name='auth' options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );
