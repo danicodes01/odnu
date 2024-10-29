@@ -10,9 +10,10 @@ interface VideoPlayerProps {
 const { height } = Dimensions.get('window');
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl }) => {
+  console.log("videoUrl", videoUrl);
   // Check if the video URL is a YouTube link
   const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
-
+  
   return isYouTube ? (
     <WebView
       source={{ uri: videoUrl.replace("watch?v=", "embed/") }} // Embedding YouTube URL
