@@ -75,6 +75,7 @@ export default function ChatScreen() {
     });
 
     es.addEventListener("message", async (e: any) => {
+      console.log("Received message:", e.data);
       try {
         const response = await JSON.parse(e.data);
         setIsThinking(false);

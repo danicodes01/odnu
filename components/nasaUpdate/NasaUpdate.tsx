@@ -10,6 +10,7 @@ interface Feed {
     title: string;
     date: string;
     description: string;
+    mediaType: string;
     media: string;
     url: string;
   }
@@ -20,11 +21,22 @@ export default function NasaUpdate() {
     const getFeed = useCallback(async () => {
       const apiKey = process.env.EXPO_PUBLIC_REACT_APP_NASA_API_KEY;
       const url = `https://api.nasa.gov/planetary/apod?api_key=${apiKey}`;
-  
+    
       try {
         const response = await fetch(url);
         const data = await response.json();
-  
+        console.log("data: ", data);
+    
+        let mediaUrl = data.url;
+        const twitterLink = data.explanation.match(/(https?:\/\/)?(pic\.twitter\.com\/\S+)/i);
+        console.log("twitterLink: ", twitterLink);
+        if (twitterLink && twitterLink[0]) {
+          // Construct the full URL if needed
+          mediaUrl = twitterLink[0].startsWith('http') ? twitterLink[0] : `https://${twitterLink[0]}`;
+        }
+
+        console.log("mediaUrlHereere!!!: ", mediaUrl);
+    
         const refactorData: Feed[] = [
           {
             id: data.title,
@@ -32,17 +44,16 @@ export default function NasaUpdate() {
             date: data.date,
             description: data.explanation,
             media: data.media,
-            // url: "https://www.w3schools.com/html/mov_bbb.mp4",
-            // url: "https://www.youtube.com/watch?v=9UKCv9T_rIo",
-            url: data.url,
+            mediaType: data.media_type,
+            url: mediaUrl,
           },
         ];
-  
+    
         setFeed(refactorData);
       } catch (error) {
         console.log(error);
       }
-    }, []);
+    }, []);    
   
     useEffect(() => {
       getFeed();
@@ -54,9 +65,9 @@ export default function NasaUpdate() {
   
     const planet = feed[0]; // Since you're only using one planet in the data
   
-    const isVideo = planet.media === "video"; // Check if it's a video or an image
-  
+    const isVideo = planet.media === "video" || planet.mediaType === "other"; // Check if it's a video or an image
     const headerContent = isVideo ? (
+      console.log("planet.url", planet.url),
       <VideoPlayer videoUrl={planet.url} /> // Use the new VideoPlayer component for videos
     ) : (
       <Image
