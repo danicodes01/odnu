@@ -9,35 +9,35 @@ import {
   Text,
   Platform,
   StyleSheet,
-  Linking,
 } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { getEventSource } from "../utils/event-source";
+import { getEventSource, RNEventSource } from "../utils/event-source";
 import * as Haptics from "expo-haptics";
 import Dots from "@/components/ui/Dots";
-import { useRouter } from "expo-router";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
-import * as ExpoLinking from 'expo-linking'; 
+import { useAuth } from "@/components/ctx/AuthContext";
 
 interface Message {
   author: "user" | "ai";
   message: string;
 }
 
+
 export default function ChatScreen() {
-  const [isThinking, setIsThinking] = useState<boolean>(false);
-  const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [currentMessage, setCurrentMessage] = useState<string>("");
+  const [isThinking, setIsThinking] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState("");
   const [history, setHistory] = useState<Message[]>([]);
   const scrollRef = useRef<ScrollView>(null);
-  const router = useRouter();
+  const eventSourceRef = useRef<RNEventSource | null>(null);
   const colorScheme = useColorScheme() ?? "light";
+  const { user } = useAuth();
 
-  const scrollDown = () => {
-    scrollRef.current?.scrollToEnd({ animated: true });
-  };
+  const threadId = user?.uid;
+
+  const scrollDown = () => scrollRef.current?.scrollToEnd({ animated: true });
 
   useEffect(() => {
     scrollDown();
@@ -62,79 +62,90 @@ export default function ChatScreen() {
     });
   };
 
+  const initiateEventSource = (prompt: { prompt: string }) => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
+    const es = getEventSource(prompt, threadId || "");
+    eventSourceRef.current = es;
+
+    es.addEventListener("open", () => {
+      setIsThinking(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    });
+
+    es.addEventListener("message", (e: { data: string | null }) => {
+      if (e.data) {
+        const cleanedData = e.data.replace(/^data:\s*/, "").trim();
+    
+        if (cleanedData === "[DONE]") {
+          setIsThinking(false);
+          setIsTyping(false);
+          es.close();
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          return;
+        }
+    
+        try {
+          const response = JSON.parse(cleanedData);
+          const content = response.message;
+    
+          if (typeof content === "string") {
+            updateHistoryWithTyping(content);
+            setIsTyping(true);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          } else {
+            console.error("Unexpected message format:", response);
+          }
+        } catch (error) {
+          console.error("Error parsing JSON data:", cleanedData);
+          setIsThinking(false);
+        }
+      }
+    });
+    
+
+    es.addEventListener("error", (error: any) => {
+      console.error("EventSource error:", error);
+      setIsThinking(false);
+      es.close();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    });
+  };
+
   const sendMessage = () => {
+    if (!currentMessage.trim()) return;
     setHistory([...history, { author: "user", message: currentMessage }]);
     setCurrentMessage("");
     setIsThinking(true);
 
     const prompt = { prompt: currentMessage };
-    const es = getEventSource(prompt);
 
-    es.addEventListener("open", () => {
-      setIsThinking(true);
-    });
-
-    es.addEventListener("message", async (e: any) => {
-      console.log("Received message:", e.data);
-      try {
-        const response = await JSON.parse(e.data);
-        setIsThinking(false);
-        switch (response.event) {
-          case "TYPING":
-            setIsTyping(true);
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            updateHistoryWithTyping(response.message);
-            break;
-          case "DONE":
-            setIsTyping(false);
-            es.close();
-            break;
-          default:
-            updateHistoryWithTyping(response.message);
-            break;
-        }
-      } catch (error) {
-        setIsThinking(false);
-        console.error(e);
-      }
-    });
-
-    es.addEventListener("error", () => {
-      setIsThinking(false);
-      es.close();
-    });
+    initiateEventSource(prompt);
   };
 
-  const avatar = (role: "user" | "ai") => {
-    return (
-      <View style={styles.avatarContainer}>
-        <View
-          style={[
-            styles.avatarIcon,
-            {
-              backgroundColor: Colors[colorScheme].text,
-            },
-          ]}
+  const avatar = (role: "user" | "ai") => (
+    <View style={styles.avatarContainer}>
+      <View
+        style={[
+          styles.avatarIcon,
+          { backgroundColor: Colors[colorScheme].text },
+        ]}
+      >
+        <Text
+          style={[styles.avatarText, { color: Colors[colorScheme].background }]}
         >
-          <Text
-            style={[
-              styles.avatarText,
-              { color: Colors[colorScheme].background },
-            ]}
-          >
-            {role === "ai" ? "👾" : "😻"}
-          </Text>
-        </View>
-        <View>
-          <Text
-            style={[styles.avatarName, { color: Colors[colorScheme].text }]}
-          >
-            {role === "ai" ? "" : "You"}
-          </Text>
-        </View>
+          {role === "ai" ? "👾" : "😻"}
+        </Text>
       </View>
-    );
-  };
+      <View>
+        <Text style={[styles.avatarName, { color: Colors[colorScheme].text }]}>
+          {role === "ai" ? "" : "You"}
+        </Text>
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>

@@ -1,41 +1,26 @@
+import EventSource from "react-native-event-source";
 
-import EventSource from 'react-native-event-source';
+const BASE_URL = process.env.EXPO_PUBLIC_EVENT_ROUTE_DEV; 
 
-export const getEventSource = (prompt: { prompt: string }) => {
-  const eventRouteProd = process.env.EXPO_PUBLIC_EVENT_ROUTE_PROD;
-  const eventRouteDev = process.env.EXPO_PUBLIC_EVENT_ROUTE_DEV;
-  return new EventSource(`http://localhost:8888/chat`, {
-  // return new EventSource(`http://${eventRouteProd}/chatHandler`, {
+export interface RNEventSource {
+  onerror?: ((this: EventSource, ev: { data: string | null }) => any) | null;
+  onmessage?: ((this: EventSource, ev: { data: string | null }) => any) | null;
+  onopen?: ((this: EventSource, ev: { data: string | null }) => any) | null;
+  readyState?: number;
+  close: () => void;
+  addEventListener: (type: string, listener: (event: { data: string | null }) => void) => void;
+}
+
+export const getEventSource = (prompt: { prompt: string }, threadId: string): RNEventSource => {
+  return new EventSource(`${BASE_URL}/generate`, {
     headers: {
       "Content-Type": "application/json",
     },
     method: "POST",
-    body: JSON.stringify(prompt),
+    body: JSON.stringify({
+      question: prompt.prompt,
+      thread_id: threadId,
+    }),
   });
 };
 
-
-// import EventSource from 'react-native-event-source';
-
-// export const getEventSource = (prompt: { prompt: string }) => {
-//   const eventRouteProd = process.env.EXPO_PUBLIC_EVENT_ROUTE_PROD;
-//   const eventRouteDev = process.env.EXPO_PUBLIC_EVENT_ROUTE_DEV;
-
-//   const requestBody = {
-//     chat_history: [],
-//     text: prompt.prompt,
-//   };
-  
-//   return new EventSource('http://localhost:8001/space-bot/stream', {
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//     method: "POST",
-//     body: JSON.stringify(requestBody),
-//   });
-// };
-
-
-
-
- 

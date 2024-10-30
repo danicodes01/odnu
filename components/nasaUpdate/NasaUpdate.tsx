@@ -25,17 +25,14 @@ export default function NasaUpdate() {
       try {
         const response = await fetch(url);
         const data = await response.json();
-        console.log("data: ", data);
     
         let mediaUrl = data.url;
         const twitterLink = data.explanation.match(/(https?:\/\/)?(pic\.twitter\.com\/\S+)/i);
-        console.log("twitterLink: ", twitterLink);
         if (twitterLink && twitterLink[0]) {
           // Construct the full URL if needed
           mediaUrl = twitterLink[0].startsWith('http') ? twitterLink[0] : `https://${twitterLink[0]}`;
         }
 
-        console.log("mediaUrlHereere!!!: ", mediaUrl);
     
         const refactorData: Feed[] = [
           {
@@ -67,7 +64,6 @@ export default function NasaUpdate() {
   
     const isVideo = planet.media === "video" || planet.mediaType === "other"; // Check if it's a video or an image
     const headerContent = isVideo ? (
-      console.log("planet.url", planet.url),
       <VideoPlayer videoUrl={planet.url} /> // Use the new VideoPlayer component for videos
     ) : (
       <Image
