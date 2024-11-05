@@ -71,15 +71,18 @@ export default function ChatScreen() {
     eventSourceRef.current = es;
 
     es.addEventListener("open", () => {
+      console.log("Connection opened");
       setIsThinking(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     });
 
     es.addEventListener("message", (e: { data: string | null }) => {
+      console.log("Received data chunk:", e.data);
       if (e.data) {
         const cleanedData = e.data.replace(/^data:\s*/, "").trim();
     
         if (cleanedData === "[DONE]") {
+          console.log("Stream ended with [DONE]");
           setIsThinking(false);
           setIsTyping(false);
           es.close();
@@ -92,6 +95,7 @@ export default function ChatScreen() {
           const content = response.message;
     
           if (typeof content === "string") {
+            console.log("Updating history with content:", content);
             updateHistoryWithTyping(content);
             setIsTyping(true);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -119,6 +123,8 @@ export default function ChatScreen() {
     setHistory([...history, { author: "user", message: currentMessage }]);
     setCurrentMessage("");
     setIsThinking(true);
+
+    console.log("Sending message:", currentMessage);
 
     const prompt = { prompt: currentMessage };
 

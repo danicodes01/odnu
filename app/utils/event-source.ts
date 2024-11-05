@@ -1,6 +1,6 @@
 import EventSource from "react-native-event-source";
 
-const BASE_URL = process.env.EXPO_PUBLIC_EVENT_ROUTE_DEV; 
+const BASE_URL_AWS = process.env.EXPO_PUBLIC_EVENT_ROUTE_AWS; 
 
 export interface RNEventSource {
   onerror?: ((this: EventSource, ev: { data: string | null }) => any) | null;
@@ -12,7 +12,8 @@ export interface RNEventSource {
 }
 
 export const getEventSource = (prompt: { prompt: string }, threadId: string): RNEventSource => {
-  return new EventSource(`${BASE_URL}/generate`, {
+  console.log("Creating EventSource connection...");
+  return new EventSource(`${BASE_URL_AWS}/generate`, {
     headers: {
       "Content-Type": "application/json",
     },
