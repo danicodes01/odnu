@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import Button from '@/components/ui/Button';
 import { ThemedText } from '@/components/ThemedText';
@@ -10,52 +10,58 @@ import * as Haptics from 'expo-haptics';
 export default function AuthLanding() {
   const router = useRouter();
   const backgroundColor = useThemeColor({}, 'background');
-  const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [isTyping, setIsTyping] = useState<boolean>(true);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [currentText, setCurrentText] = useState<string>('');
   const [shouldVibrate, setShouldVibrate] = useState<boolean>(true);
-  const texts = ['Your Gallactic News Source', 'Welcome to ODNU'];
+  const texts = ['Welcome to ODNU', 'Your Gallactic News Source', '🛸', 'Log in', 'Or create an account', 'To start your adventure', '✨'];
+
+  const opacity = useState(new Animated.Value(1))[0];
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
 
-    const startTypingEffect = () => {
-      if (isTyping && shouldVibrate) {
-        if (currentText.length < texts[currentIndex].length) {
-          timeout = setTimeout(() => {
-            setCurrentText(
-              texts[currentIndex].substring(0, currentText.length + 1),
-            );
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          }, 100);
-        } else {
-          timeout = setTimeout(() => {
-            setIsTyping(false);
-          }, 2000);
-        }
-      } else if (currentText.length > 0 && shouldVibrate) {
+    const typeText = () => {
+      if (currentText.length < texts[currentIndex].length) {
         timeout = setTimeout(() => {
-          setCurrentText(currentText.substring(0, currentText.length - 1));
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        }, 30);
+          setCurrentText(
+            texts[currentIndex].substring(0, currentText.length + 1)
+          );
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }, 100);
       } else {
         timeout = setTimeout(() => {
-          setIsTyping(true);
-          setCurrentIndex((currentIndex + 1) % texts.length);
-        }, 1000);
+          fadeOutText();
+        }, 2000); 
       }
     };
 
-    startTypingEffect();
+    const fadeOutText = () => {
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }).start(() => {
+        setCurrentText('');
+        opacity.setValue(1); 
+        setCurrentIndex((currentIndex + 1) % texts.length);
+        setIsTyping(true);
+      });
+    };
 
-    // Clear the timeout on cleanup
+    if (isTyping && shouldVibrate) {
+      typeText();
+    }
+
     return () => clearTimeout(timeout);
-  }, [isTyping, currentIndex, currentText, shouldVibrate]);
+  }, [isTyping, currentIndex, currentText, shouldVibrate, opacity]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor }]}>
       <ThemedView style={styles.contentContainer}>
-        <ThemedText style={styles.title}>{currentText}</ThemedText>
+        <Animated.View style={[styles.textContainer, { opacity }]}>
+          <ThemedText style={styles.title}>{currentText}</ThemedText>
+        </Animated.View>
         <Button
           label='Login'
           onPress={() => {
@@ -63,7 +69,6 @@ export default function AuthLanding() {
             router.push('/auth/login');
           }}
         />
-
         <TouchableOpacity
           onPress={() => {
             setShouldVibrate(false);
@@ -88,11 +93,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  textContainer: {
+    height: 30, 
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   title: {
     fontWeight: 'bold',
     textAlign: 'center',
     fontSize: 24,
-    marginBottom: 20,
   },
   link: {
     textDecorationLine: 'underline',
