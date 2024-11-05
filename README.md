@@ -48,3 +48,12 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Publish your app
+
+When you're ready to show the world your app, read the [publication guide](https://docs.expo.dev/distribution/introduction) to learn how to publish it.
+eas build --platform ios --profile production
+
+eas init 
+eas build:configure
+eas build --platform ios --profile production
