@@ -4,13 +4,13 @@ import NasaUpdate from '@/components/nasaUpdate/NasaUpdate';
 import Header from '@/components/header/NasaHeader';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'expo-router';
-import { FIREBASE_AUTH } from '@/firebase-config';
+import { auth } from '@/firebase-config';
 
 export default function HomeScreen() {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut(FIREBASE_AUTH);
+    await signOut(auth);
     router.replace('/auth/login');
   };
 

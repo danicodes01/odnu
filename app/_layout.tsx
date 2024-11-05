@@ -7,7 +7,7 @@ import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { FIREBASE_AUTH } from "@/firebase-config";
+import { auth } from "@/firebase-config";
 import { View, ActivityIndicator, Text } from "react-native";
 import { useRouter } from "expo-router";
 import "react-native-reanimated";
@@ -24,7 +24,7 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    const subscriber = onAuthStateChanged(FIREBASE_AUTH, (authUser) => {
+    const subscriber = onAuthStateChanged(auth, (authUser) => {
       setUser(authUser);
       setInitializing(false);
     });

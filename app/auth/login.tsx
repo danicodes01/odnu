@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { SafeAreaView, View, Alert, TouchableOpacity, StyleSheet } from "react-native";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { FIREBASE_AUTH } from "@/firebase-config";
+import { auth } from "@/firebase-config";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
@@ -16,7 +16,7 @@ export default function Login() {
 
   const handleLogin = async () => {
     try {
-      await signInWithEmailAndPassword(FIREBASE_AUTH, email, password);
+      await signInWithEmailAndPassword(auth, email, password);
       router.replace("/(tabs)"); 
     } catch (error: any) {
       Alert.alert("Login failed", error.message);
