@@ -1,6 +1,6 @@
 // ctx/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { FIREBASE_AUTH } from '@/firebase-config';
+import { auth } from '@/firebase-config';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 interface AuthContextType {
@@ -16,7 +16,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setIsLoading(false);
     });
@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = async () => {
-    await FIREBASE_AUTH.signOut();
+    await auth.signOut();
   };
 
   return (

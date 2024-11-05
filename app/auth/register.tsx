@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { FIREBASE_AUTH } from "@/firebase-config";
+import { auth } from "@/firebase-config";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
@@ -22,7 +22,7 @@ export default function Register() {
 
   const handleRegister = async () => {
     try {
-      await createUserWithEmailAndPassword(FIREBASE_AUTH, email, password);
+      await createUserWithEmailAndPassword(auth, email, password);
       Alert.alert("Success", "Registration successful, please log in.");
       router.replace("/auth/login"); 
     } catch (error: any) {
